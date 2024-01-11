@@ -32,6 +32,11 @@ export class AuthController {
     private readonly configService: ConfigService,
   ) {}
 
+  @Get('all')
+  getAll() {
+    return this.authService.findAll();
+  }
+
   @UseInterceptors(ClassSerializerInterceptor)
   @Post('register')
   async register(@Body() dto: RegisterAuthDto) {

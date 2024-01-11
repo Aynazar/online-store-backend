@@ -1,23 +1,36 @@
-import { Controller, Get, Post, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, UseGuards, Delete } from '@nestjs/common';
 import { ProductService } from './product.service';
 import { CurrentUser, Roles } from '@common/decorators';
-import { Role, User } from '@prisma/client';
+import { Role } from '@prisma/client';
 import { CreateProductDto } from './dto/create-product.dto';
 import { RolesGuard } from '../auth/guards/Role.guard';
+import { JwtPayload } from '../auth/interfaces';
 
 @Controller('product')
-@UseGuards(RolesGuard)
-@Roles(Role.ADMIN)
 export class ProductController {
   constructor(private readonly productService: ProductService) {}
 
+  @Get('all')
+  async getAll() {
+    return this.productService.findAll();
+  }
+
   @Post()
-  createProduct(@Body() dto: CreateProductDto, @CurrentUser() user: User) {
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
+  createProduct(@Body() dto: CreateProductDto, @CurrentUser() user: JwtPayload) {
     return this.productService.save(dto, user);
   }
 
   @Get(':id')
   async findById(@Param('id') id: string) {
     return this.productService.findOne(id);
+  }
+
+  @Delete(':id')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
+  async deleteProduct(@Param('id') id: string) {
+    return this.productService.delete(id);
   }
 }

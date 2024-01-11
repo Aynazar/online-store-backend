@@ -12,6 +12,8 @@ export class CreateProductDto {
   @IsNumber()
   price: number;
 
-  collection?: string[];
+  @IsString()
+  categoryId: string;
+
   images?: string[];
 }

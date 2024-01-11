@@ -1,26 +1,49 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateCategoryDto } from './dto/create-category.dto';
-import { UpdateCategoryDto } from './dto/update-category.dto';
+import { JwtPayload } from '../auth/interfaces';
+import { ConfigService } from '@nestjs/config';
+import { PrismaService } from '../prisma/prisma.service';
+import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
 
 @Injectable()
 export class CategoryService {
-  create(createCategoryDto: CreateCategoryDto) {
-    return 'This action adds a new category';
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly prismaService: PrismaService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+  ) {}
+  save(dto: CreateCategoryDto, user: JwtPayload) {
+    return this.prismaService.category.create({
+      data: {
+        title: dto.title,
+        images: dto.images,
+        description: dto.description,
+        userId: user.id,
+      },
+    });
+  }
+
+  async findOne(id: string) {
+    const category = await this.prismaService.category.findFirst({ where: { id } });
+
+    if (category) {
+      return category;
+    }
+
+    throw new NotFoundException('Эта категория не найдена');
+  }
+
+  async delete(id: string) {
+    const category = await this.prismaService.category.findFirst({ where: { id } });
+
+    if (!category) {
+      throw new ForbiddenException();
+    }
+
+    return this.prismaService.category.delete({ where: { id }, select: { id: true } });
   }
 
   findAll() {
-    return `This action returns all category`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} category`;
-  }
-
-  update(id: number, updateCategoryDto: UpdateCategoryDto) {
-    return `This action updates a #${id} category`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} category`;
+    return this.prismaService.category.findMany();
   }
 }

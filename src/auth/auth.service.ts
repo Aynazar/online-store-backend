@@ -82,6 +82,10 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
+  findAll() {
+    return this.prismaService.user.findMany();
+  }
+
   private async getRefreshToken(userId: string, agent: string): Promise<Token> {
     const _token = await this.prismaService.token.findFirst({ where: { userId, userAgent: agent } });
 

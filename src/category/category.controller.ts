@@ -2,33 +2,30 @@ import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/commo
 import { CategoryService } from './category.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
+import { CurrentUser } from '@common/decorators';
+import { JwtPayload } from '../auth/interfaces';
 
 @Controller('category')
 export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
 
-  @Post()
-  create(@Body() createCategoryDto: CreateCategoryDto) {
-    return this.categoryService.create(createCategoryDto);
-  }
-
-  @Get()
-  findAll() {
+  @Get('all')
+  getAll() {
     return this.categoryService.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.categoryService.findOne(+id);
+  @Post()
+  createCategory(@Body() dto: CreateCategoryDto, @CurrentUser() user: JwtPayload) {
+    return this.categoryService.save(dto, user);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateCategoryDto: UpdateCategoryDto) {
-    return this.categoryService.update(+id, updateCategoryDto);
+  @Get(':id')
+  async findOneCategory(@Param('id') id: string) {
+    return this.categoryService.findOne(id);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.categoryService.remove(+id);
+  async deleteCategory(@Param('id') id: string) {
+    return this.categoryService.delete(id);
   }
 }

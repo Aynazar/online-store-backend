@@ -1,10 +1,11 @@
-import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { CreateProductDto } from './dto/create-product.dto';
-import { User } from '@prisma/client';
+import { Role } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
 import { convertToSecondsUtil } from '@common/utils';
 import { ConfigService } from '@nestjs/config';
+import { JwtPayload } from '../auth/interfaces';
 
 @Injectable()
 export class ProductService {
@@ -15,14 +16,14 @@ export class ProductService {
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
-  save(dto: CreateProductDto, user: User) {
+  save(dto: CreateProductDto, user: JwtPayload) {
     return this.prismaService.product.create({
       data: {
         title: dto.title,
         description: dto.description,
         price: dto.price,
-        collection: dto.collection,
         images: dto.images,
+        categoryId: dto.categoryId,
         userId: user.id,
       },
     });
@@ -50,5 +51,19 @@ export class ProductService {
     }
 
     return product;
+  }
+
+  async delete(id: string) {
+    const product = await this.prismaService.product.findFirst({ where: { id } }).catch((err) => {
+      this.logger.error(err);
+      return null;
+    });
+
+    await Promise.all([this.cacheManager.del(id), this.cacheManager.del(product)]);
+    return this.prismaService.product.delete({ where: { id }, select: { id: true } });
+  }
+
+  findAll() {
+    return this.prismaService.product.findMany();
   }
 }

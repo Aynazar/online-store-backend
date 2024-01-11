@@ -11,14 +11,14 @@ datasource db {
 }
 
 model User {
-  id         String     @id @default(cuid())
+  id         String     @id @default(uuid())
   email      String     @unique
   fullName   String     @map("full_name")
   password   String
   roles      Role[]
-  Token      Token[]
   products   Product[]
   categories Category[]
+  Token      Token[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -37,29 +37,35 @@ model Token {
 }
 
 model Product {
-  id          String   @id @default(cuid())
+  id          String   @id @default(uuid())
   title       String   @db.VarChar(255)
-  description String   @db.VarChar(357)
+  description String[]   @db.VarChar(357)
   price       Int
-  collection  String[]
   images      String[]
-  userId      String
-  User        User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+
+  categoryId String
+  category   Category? @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  userId    String
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
   @@map("products")
 }
 
 model Category {
-  id          String   @id @default(cuid())
+  id          String   @id @default(uuid())
   title       String   @db.VarChar(255)
   description String   @db.VarChar(357)
   images      String[]
-  userId      String
-  User        User     @relation(fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade)
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+
+  products Product[]
+
+  userId String
+  User   User   @relation(fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade)
 }
 
 enum Role {
