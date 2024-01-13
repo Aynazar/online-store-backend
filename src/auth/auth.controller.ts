@@ -5,7 +5,9 @@ import {
   Controller,
   Get,
   HttpStatus,
+  NotFoundException,
   Post,
+  Req,
   Res,
   UnauthorizedException,
   UseGuards,
@@ -14,13 +16,12 @@ import {
 import { RegisterAuthDto } from './dto/register-auth.dto';
 import { LoginAuthDto } from './dto/login-auth.dto';
 import { AuthService } from './auth.service';
-import { JwtPayload, Tokens } from './interfaces';
+import { Tokens } from './interfaces';
 import { Response } from 'express';
 import { ConfigService } from '@nestjs/config';
-import { Cookie, CurrentUser, Public, Roles, UserAgent } from '@common/decorators';
+import { Cookie, Public, UserAgent } from '@common/decorators';
 import { UserResponse } from '../user/responses';
-import { RolesGuard } from './guards/Role.guard';
-import { Role } from '@prisma/client';
+import { UserService } from '../user/user.service';
 
 const REFRESH_TOKEN = 'refreshtoken';
 
@@ -30,6 +31,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly configService: ConfigService,
+    private readonly userService: UserService,
   ) {}
 
   @Get('all')
@@ -48,7 +50,6 @@ export class AuthController {
 
     return new UserResponse(user);
   }
-
   @Post('login')
   async login(@Body() dto: LoginAuthDto, @Res() res: Response, @UserAgent() agent: string) {
     const tokens = await this.authService.login(dto, agent);
@@ -63,7 +64,6 @@ export class AuthController {
       accessToken: tokens.accessToken,
     };
   }
-
   @Get('logout')
   async logout(@Cookie(REFRESH_TOKEN) refreshToken: string, @Res() res: Response) {
     if (!refreshToken) {
@@ -75,7 +75,6 @@ export class AuthController {
     res.cookie(REFRESH_TOKEN, '', { httpOnly: true, secure: true, expires: new Date() });
     res.sendStatus(HttpStatus.OK);
   }
-
   @Get('refresh-tokens')
   async refreshTokens(@Cookie(REFRESH_TOKEN) refreshToken: string, @Res() res: Response, @UserAgent() agent: string) {
     if (!refreshToken) {

@@ -6,6 +6,7 @@ import { JwtPayload } from '../auth/interfaces';
 import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
 import { convertToSecondsUtil } from '@common/utils';
 import { ConfigService } from '@nestjs/config';
+import { UserResponse } from './responses';
 
 @Injectable()
 export class UserService {
@@ -25,6 +26,18 @@ export class UserService {
         roles: ['USER'],
       },
     });
+  }
+
+  async getMe(id: string) {
+    const user = await this.findOne(id);
+
+    if (user.id === id) {
+      const { password, ...data } = user;
+
+      return data;
+    }
+
+    throw new ForbiddenException();
   }
 
   async findOne(idOrEmail: string, isReset = false) {

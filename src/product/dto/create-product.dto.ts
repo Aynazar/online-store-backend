@@ -7,7 +7,7 @@ export class CreateProductDto {
 
   @IsString()
   @MaxLength(357)
-  description: string;
+  description: string[];
 
   @IsNumber()
   price: number;
