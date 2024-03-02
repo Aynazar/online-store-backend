@@ -3,14 +3,12 @@ import {
   Body,
   ClassSerializerInterceptor,
   Controller,
+  ForbiddenException,
   Get,
   HttpStatus,
-  NotFoundException,
   Post,
-  Req,
   Res,
   UnauthorizedException,
-  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { RegisterAuthDto } from './dto/register-auth.dto';
@@ -22,6 +20,7 @@ import { ConfigService } from '@nestjs/config';
 import { Cookie, Public, UserAgent } from '@common/decorators';
 import { UserResponse } from '../user/responses';
 import { UserService } from '../user/user.service';
+import { User } from '@prisma/client';
 
 const REFRESH_TOKEN = 'refreshtoken';
 
@@ -30,8 +29,8 @@ const REFRESH_TOKEN = 'refreshtoken';
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
-    private readonly configService: ConfigService,
     private readonly userService: UserService,
+    private readonly configService: ConfigService,
   ) {}
 
   @Get('all')
@@ -53,16 +52,19 @@ export class AuthController {
   @Post('login')
   async login(@Body() dto: LoginAuthDto, @Res() res: Response, @UserAgent() agent: string) {
     const tokens = await this.authService.login(dto, agent);
+    const userData = await this.userService.findOne(dto.email);
+
+    if (!userData) {
+      throw new ForbiddenException();
+    }
 
     if (!tokens) {
       throw new BadRequestException('Не получается войти');
     }
 
-    this.setRefreshTokenToCookies(tokens, res);
+    this.setRefreshTokenToCookies(tokens, res, userData);
 
-    return {
-      accessToken: tokens.accessToken,
-    };
+    return { accessToken: tokens.accessToken };
   }
   @Get('logout')
   async logout(@Cookie(REFRESH_TOKEN) refreshToken: string, @Res() res: Response) {
@@ -87,11 +89,12 @@ export class AuthController {
       throw new UnauthorizedException();
     }
 
-    this.setRefreshTokenToCookies(tokens, res);
+    this.setRefreshTokenToCookies(tokens, res, null);
   }
 
-  private setRefreshTokenToCookies(tokens: Tokens, res: Response) {
-    if (!tokens) {
+  private setRefreshTokenToCookies(tokens: Tokens, res: Response, user: User) {
+    const { password, ...userData } = user;
+    if (!tokens && !userData) {
       throw new UnauthorizedException();
     }
 
@@ -102,6 +105,6 @@ export class AuthController {
       secure: this.configService.get('NODE_ENV', 'development') === 'production',
       path: '/',
     });
-    res.status(HttpStatus.CREATED).json({ accessToken: tokens.accessToken });
+    res.status(HttpStatus.CREATED).json({ ...userData, accessToken: tokens.accessToken });
   }
 }

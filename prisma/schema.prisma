@@ -39,8 +39,15 @@ model Token {
 model Product {
   id          String   @id @default(uuid())
   title       String   @db.VarChar(255)
-  description String[]   @db.VarChar(357)
+  description String   @db.VarChar(357)
   price       Int
+  type        String?
+  brand       String?
+  screen      String?
+  screenSize  String? @map("screen_size")
+  color      String?
+  frame       String?
+
   images      String[]
 
   categoryId String
@@ -58,6 +65,8 @@ model Category {
   id          String   @id @default(uuid())
   title       String   @db.VarChar(255)
   description String   @db.VarChar(357)
+  brand       String
+  receipt     Boolean @default(true)
   images      String[]
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")

@@ -24,6 +24,12 @@ export class ProductService {
         price: dto.price,
         images: dto.images,
         categoryId: dto.categoryId,
+        type: dto.type,
+        brand: dto.brand,
+        screen: dto.screen,
+        screenSize: dto.screenSize,
+        color: dto.color,
+        frame: dto.frame,
         userId: user.id,
       },
     });

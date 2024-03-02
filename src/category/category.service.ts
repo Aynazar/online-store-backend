@@ -1,27 +1,40 @@
-import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { JwtPayload } from '../auth/interfaces';
-import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
-import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
+import { add } from 'date-fns';
+import { Category, User } from '@prisma/client';
 
 @Injectable()
 export class CategoryService {
-  constructor(
-    private readonly configService: ConfigService,
-    private readonly prismaService: PrismaService,
-    @Inject(CACHE_MANAGER) private cacheManager: Cache,
-  ) {}
+  constructor(private readonly prismaService: PrismaService) {}
+  /* save(dto: CreateCategoryDto, user: JwtPayload, images: Array<Express.Multer.File>) {
+    return this.prismaService.category.create({
+      data: {
+        title: dto.title,
+        images: this.setImageArray(images),
+        description: dto.description,
+        userId: user.id,
+      },
+    });
+  }*/
   save(dto: CreateCategoryDto, user: JwtPayload) {
     return this.prismaService.category.create({
       data: {
         title: dto.title,
         images: dto.images,
         description: dto.description,
+        brand: dto.brand,
         userId: user.id,
       },
     });
   }
+
+  /*  private setImageArray(images: Array<Express.Multer.File>) {
+    return images.length > 1
+      ? images.map((img) => `http://localhost:8888/images/${img.filename}`)
+      : [`http://localhost:8888/images/${images[0].filename}`];
+  }*/
 
   async findOne(id: string) {
     const category = await this.prismaService.category.findFirst({ where: { id } });
@@ -45,5 +58,28 @@ export class CategoryService {
 
   findAll() {
     return this.prismaService.category.findMany();
+  }
+
+  async checkReceiptToExt(id: string) {
+    if (add(new Date(), { months: 1 }) < new Date()) {
+      const category: Category = await this.prismaService.category.update({
+        where: {
+          id: id,
+        },
+        data: {
+          //@ts-ignore
+          receipt: true,
+        },
+      });
+
+      return category;
+    }
+  }
+  async uploadImages(images: Array<Express.Multer.File>) {
+    if (!images) {
+      throw new NotFoundException();
+    }
+
+    return images;
   }
 }

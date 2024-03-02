@@ -9,5 +9,7 @@ export class CreateCategoryDto {
   @MinLength(6)
   description: string;
 
-  images: string[];
+  brand: string;
+
+  images?: string[];
 }

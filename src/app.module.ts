@@ -9,7 +9,14 @@ import { ProductModule } from './product/product.module';
 import { CategoryModule } from './category/category.module';
 
 @Module({
-  imports: [UserModule, PrismaModule, AuthModule, ConfigModule.forRoot({ isGlobal: true }), ProductModule, CategoryModule],
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    UserModule,
+    PrismaModule,
+    AuthModule,
+    ProductModule,
+    CategoryModule,
+  ],
   providers: [
     {
       provide: APP_GUARD,
