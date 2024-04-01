@@ -3,38 +3,25 @@ import { CreateCategoryDto } from './dto/create-category.dto';
 import { JwtPayload } from '../auth/interfaces';
 import { PrismaService } from '../prisma/prisma.service';
 import { add } from 'date-fns';
-import { Category, User } from '@prisma/client';
+import { Category, Role } from '@prisma/client';
 
 @Injectable()
 export class CategoryService {
   constructor(private readonly prismaService: PrismaService) {}
-  /* save(dto: CreateCategoryDto, user: JwtPayload, images: Array<Express.Multer.File>) {
-    return this.prismaService.category.create({
-      data: {
-        title: dto.title,
-        images: this.setImageArray(images),
-        description: dto.description,
-        userId: user.id,
-      },
-    });
-  }*/
   save(dto: CreateCategoryDto, user: JwtPayload) {
+    if (!user.roles.includes(Role.ADMIN)) {
+      throw new ForbiddenException();
+    }
     return this.prismaService.category.create({
       data: {
         title: dto.title,
-        images: dto.images,
+        image: dto.image,
         description: dto.description,
         brand: dto.brand,
         userId: user.id,
       },
     });
   }
-
-  /*  private setImageArray(images: Array<Express.Multer.File>) {
-    return images.length > 1
-      ? images.map((img) => `http://localhost:8888/images/${img.filename}`)
-      : [`http://localhost:8888/images/${images[0].filename}`];
-  }*/
 
   async findOne(id: string) {
     const category = await this.prismaService.category.findFirst({ where: { id } });
@@ -67,7 +54,6 @@ export class CategoryService {
           id: id,
         },
         data: {
-          //@ts-ignore
           receipt: true,
         },
       });
@@ -75,11 +61,12 @@ export class CategoryService {
       return category;
     }
   }
-  async uploadImages(images: Array<Express.Multer.File>) {
-    if (!images) {
-      throw new NotFoundException();
-    }
-
-    return images;
+  async uploadImage(file: Express.Multer.File) {
+    console.log(file);
+    return {
+      url: `http://localhost:8888/images/${file.filename}`,
+      size: file.size,
+      filename: file.filename,
+    };
   }
 }

@@ -67,7 +67,7 @@ model Category {
   description String   @db.VarChar(357)
   brand       String
   receipt     Boolean @default(true)
-  images      String[]
+  image      String
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
 

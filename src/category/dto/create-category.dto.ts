@@ -11,5 +11,5 @@ export class CreateCategoryDto {
 
   brand: string;
 
-  images?: string[];
+  image: string;
 }
